@@ -23,6 +23,7 @@ __all__ = [
     'multiply_scenarios',
     ]
 
+from functools import wraps
 from itertools import (
     chain,
     product,
@@ -165,3 +166,52 @@ def per_module_scenarios(attribute_name, modules):
             short_name, 
             {attribute_name: mod}))
     return scenarios
+
+
+def with_scenarios(prefix="test"):
+    """Mutate the decorated TestCase, producing methods for each scenario.
+
+    :param str prefix: the prefix to match for test methods
+
+    """
+    def _populate_scenarios(cls):
+        scenarios = getattr(cls, "scenarios", None)
+        if scenarios is None:
+            return cls
+
+        tests = [
+            (name, getattr(cls, name, None))
+            for name in dir(cls) if name.startswith(prefix)
+        ]
+
+        for name, test in tests:
+            # Sometimes dir lies, which we caught by using None above
+            if test is None:
+                continue
+
+            delattr(cls, name)
+            for scenario_name, scenario_params in scenarios:
+                _test = _make_test(name, test, scenario_name, scenario_params)
+                setattr(cls, _test.__name__, _test)
+        return cls
+    return _populate_scenarios
+
+
+def _make_test(name, test, scenario_name, scenario_params):
+    """Create a test that wraps the given test under the given scenario.
+
+    :param str name: the name of the test
+    :param callable test: the test method
+    :param str scenario_name: the scenario
+    :param dict scenario_params: the scenario's parameters
+
+    """
+
+    @wraps(test)
+    def _test(self, *args, **kwargs):
+        for k, v in scenario_params.iteritems():
+            setattr(self, k, v)
+        return test(self, *args, **kwargs)
+
+    _test.__name__ = "%s_%s" % (name, scenario_name)
+    return _test

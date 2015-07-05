@@ -29,6 +29,7 @@ from testscenarios.scenarios import (
     generate_scenarios,
     load_tests_apply_scenarios,
     multiply_scenarios,
+    with_scenarios,
     )
 
 
@@ -260,3 +261,63 @@ class TestPerModuleScenarios(testtools.TestCase):
             ('unittest', {'the_module': unittest}),
             ('nonexistent', {'the_module': None}),
             ])
+
+
+class TestWithScenariosDecorator(testtools.TestCase):
+    def test_with_scenarios(self):
+        @with_scenarios()
+        class TestFoo(object):
+            scenarios = [
+                ("first", {"a" : 1}),
+                ("second", {"a" : 2}),
+            ]
+
+            def test_bar(self):
+                if self.a == 2:
+                    raise ImportError("Yup, it's 2")
+
+            def test_baz(self):
+                if self.a == 1:
+                    raise ImportError("Yup, it's 1")
+
+        self.assertEqual(
+            sorted(name for name in dir(TestFoo) if name.startswith("test")),
+            [
+                "test_bar_first",
+                "test_bar_second",
+                "test_baz_first",
+                "test_baz_second",
+            ],
+        )
+
+        TestFoo().test_bar_first()
+        TestFoo().test_baz_second()
+
+        self.assertRaises(ImportError, TestFoo().test_bar_second)
+        self.assertRaises(ImportError, TestFoo().test_baz_first)
+
+    def test_with_scenarios_prefix(self):
+        @with_scenarios(prefix="test_")
+        class TestFoo(object):
+            scenarios = [("a", {})]
+            def testBar(self):
+                pass
+
+            def test_foo(self):
+                pass
+
+        self.assertEqual(
+            sorted(name for name in dir(TestFoo) if name.startswith("test")),
+            ["testBar", "test_foo_a"],
+        )
+
+    def test_with_scenarios_no_scenarios(self):
+        @with_scenarios()
+        class TestFoo(object):
+            def test_bar(self):
+                pass
+
+        self.assertEqual(
+            sorted(name for name in dir(TestFoo) if name.startswith("test")),
+            ["test_bar"],
+        )

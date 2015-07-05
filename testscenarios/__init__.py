@@ -52,6 +52,7 @@ __all__ = [
     'load_tests_apply_scenarios',
     'multiply_scenarios',
     'per_module_scenarios',
+    'with_scenarios',
     ]
 
 
@@ -61,6 +62,7 @@ from testscenarios.scenarios import (
     load_tests_apply_scenarios,
     multiply_scenarios,
     per_module_scenarios,
+    with_scenarios,
     )
 from testscenarios.testcase import TestWithScenarios, WithScenarios
 
