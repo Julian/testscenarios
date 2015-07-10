@@ -209,7 +209,7 @@ def _make_test(name, test, scenario_name, scenario_params):
 
     @wraps(test)
     def _test(self, *args, **kwargs):
-        for k, v in scenario_params.iteritems():
+        for k, v in scenario_params.items():
             setattr(self, k, v)
         return test(self, *args, **kwargs)
 
