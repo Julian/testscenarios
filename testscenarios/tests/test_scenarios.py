@@ -321,3 +321,21 @@ class TestWithScenariosDecorator(testtools.TestCase):
             sorted(name for name in dir(TestFoo) if name.startswith("test")),
             ["test_bar"],
         )
+
+    def test_with_scenarios_are_available_during_setUp(self):
+        @with_scenarios()
+        class TestFoo(object):
+            scenarios = [
+                ("first", {"a" : 1}),
+                ("second", {"a" : 2}),
+            ]
+
+            def scenarioSetUp(self):
+                if self.a == 2:
+                    raise ImportError("Yup, it's 2")
+
+            def test_bar(self):
+                pass
+
+        TestFoo().test_bar_first()
+        self.assertRaises(ImportError, TestFoo().test_bar_second)

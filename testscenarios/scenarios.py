@@ -211,6 +211,8 @@ def _make_test(name, test, scenario_name, scenario_params):
     def _test(self, *args, **kwargs):
         for k, v in scenario_params.items():
             setattr(self, k, v)
+        scenario_set_up = getattr(self, "scenarioSetUp", lambda: None)
+        scenario_set_up()
         return test(self, *args, **kwargs)
 
     _test.__name__ = "%s_%s" % (name, scenario_name)
